@@ -1,9 +1,10 @@
 import './globals.css'
 import { Metadata } from 'next'
+import Providers from '@/components/providers'
 
 export const metadata: Metadata = {
   title: 'TrialOutline - AI-Powered Examination Outlines',
-  description: 'Generate witness examination outlines with AI',
+  description: 'Generate professional witness examination outlines with AI. Upload case documents, get chapter-method cross and direct examination outlines.',
 }
 
 export default function RootLayout({
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }

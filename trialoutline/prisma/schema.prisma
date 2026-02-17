@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth Models (NextAuth) ──────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Core Models ─────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  accounts      Account[]
+  sessions      Session[]
+  cases         Case[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Case {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  caseNumber   String?
+  court        String?
+  jurisdiction String?
+  caseType     String     @default("civil") // civil, family, criminal
+  theory       String?    @db.Text // attorney's theory of the case
+  theme        String?    // one-line theme
+  clientName   String?
+  clientRole   String?    // plaintiff, defendant, petitioner, respondent
+  status       String     @default("setup") // setup, processing, ready, archived
+  parties      Party[]
+  documents    Document[]
+  witnesses    Witness[]
+  outlines     Outline[]
+  keyIssues    String[]   @default([])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Party {
+  id   String @id @default(cuid())
+  caseId String
+  case   Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  name   String
+  role   String // plaintiff, defendant, petitioner, respondent, child, third-party
+  side   String @default("neutral") // our_client, opposing, neutral
+  attorney String?
+}
+
+model Document {
+  id           String         @id @default(cuid())
+  caseId       String
+  case         Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileName     String
+  originalName String
+  fileSize     Int
+  mimeType     String?
+  storagePath  String         // path on disk or S3 key
+  docType      String?        // deposition, exhibit, expert_report, correspondence, text_messages, court_filing, contract
+  title        String?        // extracted or assigned title
+  date         DateTime?      // document date
+  author       String?        // who created it
+  summary      String?        @db.Text
+  pageCount    Int?
+  status       String         @default("pending") // pending, processing, ready, error
+  errorMessage String?
+  metadata     Json?
+  pages        DocumentPage[]
+  statements   Statement[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+}
+
+model DocumentPage {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageNumber Int
+  text       String   @db.Text
+
+  @@unique([documentId, pageNumber])
+  @@index([documentId])
+}
+
+model Speaker {
+  id         String      @id @default(cuid())
+  caseId     String
+  name       String
+  aliases    String[]    @default([])
+  role       String?     // witness, attorney, judge, party, expert
+  statements Statement[]
+
+  @@unique([caseId, name])
+}
+
+model Statement {
+  id         String   @id @default(cuid())
+  speakerId  String
+  speaker    Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageNumber Int
+  lineNumber Int?
+  text       String   @db.Text
+  context    String?  @db.Text
+
+  @@index([speakerId])
+  @@index([documentId])
+}
+
+model Witness {
+  id       String    @id @default(cuid())
+  caseId   String
+  case     Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  name     String
+  type     String    @default("fact") // fact, expert, party, character
+  side     String    @default("neutral") // friendly, adverse, neutral
+  profile  Json?     // AI-generated profile
+  outlines Outline[]
+
+  @@unique([caseId, name])
+}
+
+model Outline {
+  id        String           @id @default(cuid())
+  caseId    String
+  case      Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  witnessId String
+  witness   Witness          @relation(fields: [witnessId], references: [id], onDelete: Cascade)
+  examType  String           // direct, cross, redirect, recross
+  title     String
+  chapters  Json             // the full chapter-method outline data
+  status    String           @default("draft") // draft, reviewed, final
+  versions  OutlineVersion[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([caseId])
+  @@index([witnessId])
+}
+
+model OutlineVersion {
+  id        String   @id @default(cuid())
+  outlineId String
+  outline   Outline  @relation(fields: [outlineId], references: [id], onDelete: Cascade)
+  chapters  Json
+  editNote  String?
+  createdAt DateTime @default(now())
+
+  @@index([outlineId])
+}
+
+// ─── Job Tracking ────────────────────────────────────────────────
+
+model ProcessingJob {
+  id         String   @id @default(cuid())
+  caseId     String
+  documentId String?
+  jobType    String   // upload_extract, classify, metadata, speakers, generate_outline
+  status     String   @default("pending") // pending, running, completed, failed
+  progress   Int      @default(0)
+  error      String?  @db.Text
+  result     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+}

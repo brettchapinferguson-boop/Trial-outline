@@ -7,7 +7,6 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Deep navy primary palette
         navy: {
           950: '#0a0f1a',
           900: '#0f172a',
@@ -15,13 +14,11 @@ module.exports = {
           700: '#334155',
           600: '#475569',
         },
-        // Warm accent for highlights/citations
         citation: {
           DEFAULT: '#f59e0b',
           light: '#fbbf24',
           dark: '#d97706',
         },
-        // Category colors
         category: {
           credentials: '#3b82f6',
           methodology: '#eab308',
@@ -29,7 +26,12 @@ module.exports = {
           favorable: '#22c55e',
           damaging: '#ef4444',
           closing: '#a855f7',
-        }
+          foundation: '#06b6d4',
+        },
+        // Subtle hover state
+        slate: {
+          750: '#253145',
+        },
       },
       fontFamily: {
         display: ['Georgia', 'serif'],
