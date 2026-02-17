@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-navy-950: #0a0f1a;
+  --color-navy-900: #0f172a;
+  --color-navy-800: #1e293b;
+  --color-citation: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-navy-950);
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-700);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-navy-600);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-citation);
+  outline-offset: 2px;
+}
+
+/* Document preview styling */
+.document-preview {
+  font-family: Georgia, serif;
+  line-height: 1.8;
+}
+
+.document-preview .highlight {
+  background: linear-gradient(180deg, transparent 60%, #fef08a 60%);
+  padding: 0 2px;
+}
+
+/* Animation utilities */
+.animate-stagger > * {
+  animation: slideUp 0.4s ease-out backwards;
+}
+
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+
+/* Category badge colors */
+.badge-credentials { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-color: #3b82f6; }
+.badge-methodology { background: rgba(234, 179, 8, 0.2); color: #facc15; border-color: #eab308; }
+.badge-bias { background: rgba(249, 115, 22, 0.2); color: #fb923c; border-color: #f97316; }
+.badge-favorable { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e; }
+.badge-damaging { background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: #ef4444; }
+.badge-closing { background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: #a855f7; }
+
+/* Loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Prose for chat messages */
+.prose-chat {
+  line-height: 1.6;
+}
+
+.prose-chat strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.prose-chat ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.prose-chat li {
+  margin: 0.25rem 0;
+}
